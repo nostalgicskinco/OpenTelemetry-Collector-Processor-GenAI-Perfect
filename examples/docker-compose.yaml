@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  jaeger:
+      image: jaegertracing/all-in-one:1.54
+          ports:
+                - "16686:16686"   # Jaeger UI
+                      - "14317:4317"    # OTLP gRPC (Jaeger receiver)
+                          environment:
+                                - COLLECTOR_OTLP_ENABLED=true
+
+                                  prometheus:
+                                      image: prom/prometheus:v2.51.0
+                                          ports:
+                                                - "9090:9090"
+                                                    volumes:
+                                                          - ./prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+
+                                                            otelcol:
+                                                                build:
+                                                                      context: ..
+                                                                            dockerfile: Dockerfile
+                                                                                command: ["--config=/etc/otelcol-config.yaml"]
+                                                                                    volumes:
+                                                                                          - ./otelcol-config.yaml:/etc/otelcol-config.yaml:ro
+                                                                                              ports:
+                                                                                                    - "4317:4317"     # OTLP gRPC
+                                                                                                          - "4318:4318"     # OTLP HTTP
+                                                                                                                - "8889:8889"     # Prometheus metrics
+                                                                                                                    depends_on:
+                                                                                                                          - jaeger
+                                                                                                                                - prometheus
